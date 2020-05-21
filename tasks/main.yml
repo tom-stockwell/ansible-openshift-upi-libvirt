@@ -1,2 +1,2 @@
 ---
-# tasks file for stocky37.openshift-upi-libvirt
+- include_tasks: prerequisites.yml

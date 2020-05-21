@@ -1,2 +1,43 @@
 ---
-# defaults file for stocky37.openshift-upi-libvirt
+openshift_hosts:
+  loadbalancers:
+    - name: lb.{{ openshift_fqdn }}
+      ip: "{{ openshift_network_dhcp_start | ipmath(1) }}"
+  bootstraps:
+    - name: bootstrap.{{ openshift_fqdn }}
+      ip: "{{ openshift_network_dhcp_start | ipmath(2) }}"
+  masters:
+    - name:
+        - master-0.{{ openshift_fqdn }}
+        - etcd-0.{{ openshift_fqdn }}
+      ip: "{{ openshift_network_dhcp_start | ipmath(3) }}"
+    - name:
+        - master-1.{{ openshift_fqdn }}
+        - etcd-1.{{ openshift_fqdn }}
+      ip: "{{ openshift_network_dhcp_start | ipmath(4) }}"
+    - name:
+        - master-2.{{ openshift_fqdn }}
+        - etcd-2.{{ openshift_fqdn }}
+      ip: "{{ openshift_network_dhcp_start | ipmath(5) }}"
+  workers:
+    - name: worker-0.{{ openshift_fqdn }}
+      ip: "{{ openshift_network_dhcp_start | ipmath(6) }}"
+    - name: worker-1.{{ openshift_fqdn }}
+      ip: "{{ openshift_network_dhcp_start | ipmath(7) }}"
+
+openshift_api_cname: "{{ openshift_hosts.loadbalancers[0].name }}"
+openshift_api_internal_cname: "{{ openshift_api_cname }}"
+openshift_apps_cname: "{{ openshift_api_cname }}"
+
+openshift_network_name: openshift
+openshift_network_template: openshift-network.xml.j2
+openshift_network_bridge_name: "{{ openshift_network_name }}-br"
+openshift_network_forward_mode: nat
+openshift_network_cidr: 192.168.200.0/24
+openshift_network_ip: "{{ openshift_network_cidr | ipaddr('net') | ipaddr(1) | default(openshift_network_cidr | ipaddr('ip/prefix') | ipaddr('ip')) }}"
+openshift_network_dhcp_start: "{{ openshift_network_ip | ipaddr('next_usable') }}"
+openshift_network_dhcp_end: "{{ openshift_network_ip | ipaddr('last_usable') }}"
+openshift_network_mac_prefix: "52:54:00"
+
+openshift_network_internal_dns:
+  - domain: "{{ openshift_fqdn }}"

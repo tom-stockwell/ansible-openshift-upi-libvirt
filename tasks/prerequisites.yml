@@ -1,0 +1,12 @@
+---
+- name: Setup openshift network
+  include_role:
+    name: stackhpc.libvirt-host
+    tasks_from: networks.yml
+  vars:
+    libvirt_host_networks:
+      - name: "{{ openshift_network_name }}"
+        xml: "{{ lookup('template', openshift_network_template) }}"
+        # empty values since for some reason the original template still tries to render since it's a default
+        mode: '' 
+        bridge: ''
