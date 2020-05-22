@@ -2,3 +2,5 @@
 openshift_fqdn: "{{ openshift_cluster_name }}.{{ openshift_base_domain }}"
 openshift_all_hosts: "{{ openshift_hosts | json_query('*') | flatten }}"
 openshift_network_dns: "{{ ([openshift_network_internal_dns] + [openshift_network_extra_dns]) | flatten }}"
+openshift_network_internal_dns:
+  - domain: "{{ openshift_fqdn }}"

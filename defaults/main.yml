@@ -1,34 +1,17 @@
 ---
-openshift_hosts:
-  loadbalancers:
-    - name: lb.{{ openshift_fqdn }}
-      ip: "{{ openshift_network_dhcp_start | ipmath(1) }}"
-  bootstraps:
-    - name: bootstrap.{{ openshift_fqdn }}
-      ip: "{{ openshift_network_dhcp_start | ipmath(2) }}"
-  masters:
-    - name:
-        - master-0.{{ openshift_fqdn }}
-        - etcd-0.{{ openshift_fqdn }}
-      ip: "{{ openshift_network_dhcp_start | ipmath(3) }}"
-    - name:
-        - master-1.{{ openshift_fqdn }}
-        - etcd-1.{{ openshift_fqdn }}
-      ip: "{{ openshift_network_dhcp_start | ipmath(4) }}"
-    - name:
-        - master-2.{{ openshift_fqdn }}
-        - etcd-2.{{ openshift_fqdn }}
-      ip: "{{ openshift_network_dhcp_start | ipmath(5) }}"
-  workers:
-    - name: worker-0.{{ openshift_fqdn }}
-      ip: "{{ openshift_network_dhcp_start | ipmath(6) }}"
-    - name: worker-1.{{ openshift_fqdn }}
-      ip: "{{ openshift_network_dhcp_start | ipmath(7) }}"
+openshift_cluster_name: ocp4
+openshift_install_root: "{{ ansible_user_dir }}/openshift"
+openshift_install_dir: "{{ openshift_install_root }}/{{ openshift_fqdn }}"
+openshift_terraform_dir: "{{ openshift_install_dir }}/terraform"
+openshift_terraform_files: terraform/
+openshift_rhcos_url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-qemu.x86_64.qcow2.gz
+openshift_fedora_url: https://download.fedoraproject.org/pub/fedora/linux/releases/32/Cloud/x86_64/images/Fedora-Cloud-Base-32-1.6.x86_64.qcow2
 
 openshift_api_cname: "{{ openshift_hosts.loadbalancers[0].name }}"
 openshift_api_internal_cname: "{{ openshift_api_cname }}"
 openshift_apps_cname: "{{ openshift_api_cname }}"
 
+openshift_storage_pool: default
 openshift_network_name: openshift
 openshift_network_template: openshift-network.xml.j2
 openshift_network_bridge_name: "{{ openshift_network_name }}-br"
@@ -37,7 +20,38 @@ openshift_network_cidr: 192.168.200.0/24
 openshift_network_ip: "{{ openshift_network_cidr | ipaddr('net') | ipaddr(1) | default(openshift_network_cidr | ipaddr('ip/prefix') | ipaddr('ip')) }}"
 openshift_network_dhcp_start: "{{ openshift_network_ip | ipaddr('next_usable') }}"
 openshift_network_dhcp_end: "{{ openshift_network_ip | ipaddr('last_usable') }}"
-openshift_network_mac_prefix: "52:54:00"
+openshift_network_mac_prefix: '52:54:00'
 
-openshift_network_internal_dns:
-  - domain: "{{ openshift_fqdn }}"
+openshift_hosts:
+  loadbalancers:
+    - names: [lb]
+      ip: "{{ openshift_network_dhcp_start | ipmath(1) }}"
+      mac: "{{ openshift_network_mac_prefix | random_mac('lb.' + openshift_fqdn) }}"
+  bootstraps:
+    - names: [bootstrap]
+      ip: "{{ openshift_network_dhcp_start | ipmath(2) }}"
+      mac: "{{ openshift_network_mac_prefix | random_mac('bootstrap.' + openshift_fqdn) }}"
+  masters:
+    - names:
+        - master-0
+        - etcd-0
+      ip: "{{ openshift_network_dhcp_start | ipmath(3) }}"
+      mac: "{{ openshift_network_mac_prefix | random_mac('master-0.' + openshift_fqdn) }}"
+    - names:
+        - master-1
+        - etcd-1
+      ip: "{{ openshift_network_dhcp_start | ipmath(4) }}"
+      mac: "{{ openshift_network_mac_prefix | random_mac('master-1.' + openshift_fqdn) }}"
+    - names:
+        - master-2
+        - etcd-2
+      ip: "{{ openshift_network_dhcp_start | ipmath(5) }}"
+      mac: "{{ openshift_network_mac_prefix | random_mac('master-2.' + openshift_fqdn) }}"
+  workers:
+    - names: [worker-0]
+      ip: "{{ openshift_network_dhcp_start | ipmath(6) }}"
+      mac: "{{ openshift_network_mac_prefix | random_mac('worker-0.' + openshift_fqdn) }}"
+    - names: [worker-1]
+      ip: "{{ openshift_network_dhcp_start | ipmath(7) }}"
+      mac: "{{ openshift_network_mac_prefix | random_mac('worker-1.' + openshift_fqdn) }}"
+

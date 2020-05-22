@@ -1,0 +1,43 @@
+#jinja2:lstrip_blocks: True
+<network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
+  <name>{{ openshift_network_name }}</name>
+  <bridge name='{{ openshift_network_bridge_name }}' />
+  <forward mode='{{ openshift_network_forward_mode }}' />
+  <domain name='{{ openshift_fqdn }}'/>
+  <ip address='{{ openshift_network_ip | ipaddr('ip') }}' netmask='{{ openshift_network_ip | ipaddr('netmask') }}'>
+    <dhcp>
+      <range start='{{ openshift_network_dhcp_start | ipaddr('ip') }}' end='{{ openshift_network_dhcp_end | ipaddr('ip') }}'/>
+      {% for host in openshift_all_hosts %}
+      <host name='{{ host.names | first }}.{{ openshift_fqdn }}' ip='{{ host.ip | ipaddr('ip') }}' mac='{{ host.mac }}'/>
+      {% endfor %}
+    </dhcp>
+  </ip>
+
+  <dns>
+    {% for forwarder in openshift_network_dns %}
+    <forwarder {% if forwarder.domain is defined %}domain='{{ forwarder.domain }}'{% endif %} {% if forwarder.addr is defined %}addr='{{ forwarder.addr }}'{% endif %}/>
+    {% endfor %}
+    {% for host in openshift_all_hosts %}
+    <host ip='{{ host.ip | ipaddr('ip') }}'>
+      {% for name in host.names %}
+      <hostname>{{ name }}.{{ openshift_fqdn }}</hostname>
+      {% endfor %}
+    </host>
+    {% endfor %}
+  </dns>
+
+  <dnsmasq:options>
+    {% for master in openshift_hosts.masters %}
+    <dnsmasq:option value="srv-host=_etcd-server-ssl._tcp.{{ openshift_fqdn }},etcd-{{ loop.index - 1 }}.{{ openshift_fqdn }},2380,0,10" />
+    {% endfor %}
+
+    <dnsmasq:option value="cname=api.{{ openshift_fqdn }},{{ openshift_api_cname }}" />
+    <dnsmasq:option value="cname=api-int.{{ openshift_fqdn }},{{ openshift_api_internal_cname }}" />
+    <dnsmasq:option value="cname=*.apps.{{ openshift_fqdn }},{{ openshift_apps_cname }}" />
+    
+    {# required to make this authoritative for the openshift fqdn, so we can use the wildcard cname #}
+    <dnsmasq:option value="auth-zone={{ openshift_fqdn }},{{ openshift_network_ip | ipaddr('0')}}" />
+    <dnsmasq:option value="auth-server={{ openshift_fqdn }},{{ openshift_network_bridge_name }}" />
+  </dnsmasq:options>
+
+</network>

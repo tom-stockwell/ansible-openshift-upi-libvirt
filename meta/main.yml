@@ -50,4 +50,5 @@ galaxy_info:
 dependencies: 
   - name: stackhpc.libvirt-host
     tags: [ never ]
-    when: false
+  - name: stocky37.openshift-clients
+    tags: [ never ]
