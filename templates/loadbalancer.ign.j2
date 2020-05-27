@@ -1,0 +1,19 @@
+{
+	"ignition": { "version": "2.2.0" },
+	"systemd": {
+		"units": [{
+			"name": "podman.service",
+			"enable": true
+		}]
+	},
+	"passwd": {
+		"users": [
+			{
+				"name": "fedora",
+				"sshAuthorizedKeys": [
+					"{{ openshift_ssh_key }}"
+				]
+			}
+		]
+	}
+}

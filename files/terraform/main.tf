@@ -47,7 +47,7 @@ module "bootstraps" {
 //  source      = "./modules/node"
 //
 //  node_type    = "loadbalancer"
-//fqdn         = var.fqdn
+//  fqdn         = var.fqdn
 //  names        = var.loadbalancer_names
 //  macs         = var.loadbalancer_macs
 //  network_name = var.network_name

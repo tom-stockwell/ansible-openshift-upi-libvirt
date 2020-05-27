@@ -1,0 +1,31 @@
+---
+- set_fact:
+    download_path: "{{ openshift_images_dir }}/{{ image.url | basename }}"
+
+- name: Check if image already exists
+  stat:
+    path: "{{ path }}"
+  loop:
+    - "{{ download_path }}"
+    - "{{ image.output }}"
+  loop_control:
+    loop_var: path
+  register: files
+
+- name: Download image
+  get_url:
+    url: "{{ image.url }}"
+    dest: "{{ openshift_images_dir }}"
+  when: not files.results | map(attribute='stat') | map(attribute='exists') | list is any
+
+- name: Decompress *.gz
+  command:
+    cmd: "gzip -d '{{ download_path }}'"
+    creates: "{{ image.output }}"
+  when: image.url.endswith('.qcow2.gz')
+
+- name: Decompress *.xz
+  command:
+    cmd: "unxz '{{ download_path }}'"
+    creates: "{{ image.output }}"
+  when: image.url.endswith('.qcow2.xz')

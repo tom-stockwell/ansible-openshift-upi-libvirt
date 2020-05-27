@@ -1,0 +1,17 @@
+[Unit]
+Description=Run haproxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+KillMode=none
+Restart=on-failure
+RemainAfterExit=yes
+ExecStartPre=podman pull {{ openshift_haproxy_image }}
+ExecStart=podman run -d --name haproxy -p 80:80 -p 443:443 -p 6443:6443 -p 22623:22623 {{ openshift_haproxy_image }}
+ExecStop=podman stop -t 10 haproxy
+ExecStopPost=podman rm haproxy
+
+[Install]
+WantedBy=multi-user.target

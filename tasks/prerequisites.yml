@@ -1,74 +1,93 @@
 ---
-- name: Install openshift clients
-  include_role:
-    name: stocky37.openshift-clients
-    allow_duplicates: no
-
-- name: Setup openshift network
-  include_role:
-    name: stackhpc.libvirt-host
-    tasks_from: networks.yml
-  vars:
-    libvirt_host_networks:
-      - name: "{{ openshift_network_name }}"
-        xml: "{{ lookup('template', openshift_network_template) }}"
-        # empty values since for some reason the original template still tries to render since it's a default
-        mode: ''
-        bridge: ''
-
-- name: Ensure install dirs exists
+#- name: Install openshift clients
+#  include_role:
+#    name: stocky37.openshift-clients
+#    allow_duplicates: no
+#
+#- name: Setup openshift network
+#  include_role:
+#    name: stackhpc.libvirt-host
+#    tasks_from: networks.yml
+#  vars:
+#    libvirt_host_networks:
+#      - name: "{{ openshift_network_name }}"
+#        xml: "{{ lookup('template', openshift_network_template) }}"
+#        # empty values since for some reason the original template still tries to render since it's a default
+#        mode: ''
+#        bridge: ''
+#
+- name: Create required directories
   file:
     state: directory
     path: "{{ dir }}"
   loop:
     - "{{ openshift_install_dir }}"
     - "{{ openshift_terraform_dir }}"
+    - "{{ openshift_images_dir }}"
   loop_control:
     loop_var: dir
+#
+#- name: Create install-config.yaml
+#  template:
+#    src: install-config.yml
+#    dest: "{{ openshift_install_dir }}/install-config.yaml"
+#
+#- name: Generate manifests
+#  command:
+#    cmd: openshift-install create manifests --dir="{{ openshift_install_dir }}"
+#    # creates: "{{ openshift_install_dir }}/manifests"
+#
+#- name: Configure control plane to be unschedulable
+#  replace:
+#    path: "{{ openshift_install_dir }}/manifests/cluster-scheduler-02-config.yml"
+#    regexp: 'mastersSchedulable: true'
+#    replace: 'mastersSchedulable: false'
+#  when: openshift_hosts.workers | length > 0
+#
+#- name: Generate ignition files
+#  command:
+#    cmd: openshift-install create ignition-configs --dir="{{ openshift_install_dir }}"
+#
+#- name: Create loadbalancer ignition file
+#  template:
+#    src: "{{ openshift_loadbalancer_ign_template }}"
+#    path: "{{ openshift_install_dir }}/loadbalancer.ign"
+#
+#- name: Copy terraform files
+#  copy:
+#    src: "{{ openshift_terraform_files }}"
+#    dest: "{{ openshift_terraform_dir }}"
 
-- name: Create install-config.yaml
-  template:
-    src: install-config.yml
-    dest: "{{ openshift_install_dir }}/install-config.yaml"
+- name: Download & extract os images
+  include_tasks: download-image.yml
+  loop:
+    - url: "{{ openshift_rhcos_url }}"
+      output: "{{ openshift_rhcos_image }}"
+    - url: "{{ openshift_fcos_url }}"
+      output: "{{ openshift_fcos_image }}"
+  loop_control:
+    loop_var: image
+  when: openshift_download_osimages | bool
 
-- name: Generate manifests
-  command:
-    cmd: openshift-install create manifests --dir="{{ openshift_install_dir }}"
-    # creates: "{{ openshift_install_dir }}/manifests"
-
-- name: Configure control plane to be unschedulable
-  replace:
-    path: "{{ openshift_install_dir }}/manifests/cluster-scheduler-02-config.yml"
-    regexp: 'mastersSchedulable: true'
-    replace: 'mastersSchedulable: false'
-  when: openshift_hosts.workers | length > 0
-
-- name: Generate ignition files
-  command:
-    cmd: openshift-install create ignition-configs --dir="{{ openshift_install_dir }}"
-
-- name: Copy terraform files
-  copy:
-    src: "{{ openshift_terraform_files }}"
-    dest: "{{ openshift_terraform_dir }}"
-
-- name: Run terraform
-  terraform:
-    project_path: "{{ openshift_terraform_dir }}"
-    state: present
-    force_init: yes
-    variables:
-      fqdn: "{{ openshift_fqdn }}"
-      network_name: "{{ openshift_network_name }}"
-      storage_pool: "{{ openshift_storage_pool }}"
-#      rhcos_url: "{{ openshift_fedora_url }}"
-      rhcos_url: "{{ openshift_rhcos_url }}"
-      fedora_url: "{{ openshift_fedora_url }}"
-#      master_names: "{{ openshift_hosts.masters | map(attribute='names') | map('first') | list | to_json }}"
-#      master_macs: "{{ openshift_hosts.masters | map(attribute='mac') | list | to_json }}"
-#      worker_names: "{{ openshift_hosts.workers | map(attribute='names') | map('first') | list | to_json }}"
-#      worker_macs: "{{ openshift_hosts.workers | map(attribute='mac') | list | to_json }}"
-      bootstrap_names: "{{ openshift_hosts.bootstraps | map(attribute='names') | map('first') | list | to_json }}"
-      bootstrap_macs: "{{ openshift_hosts.bootstraps | map(attribute='mac') | list | to_json }}"
-
-
+#- name: Run terraform
+#  terraform:
+#    project_path: "{{ openshift_terraform_dir }}"
+#    state: present
+#    force_init: yes
+#    variables:
+#      fqdn: "{{ openshift_fqdn }}"
+#      network_name: "{{ openshift_network_name }}"
+#      storage_pool: "{{ openshift_storage_pool }}"
+##      rhcos_url: "{{ openshift_fedora_url }}"
+#      rhcos_url: "{{ openshift_rhcos_url }}"
+#      fcos_url: "{{ openshift_fcos_url }}"
+##      master_names: "{{ openshift_hosts.masters | map(attribute='names') | map('first') | list | to_json }}"
+##      master_macs: "{{ openshift_hosts.masters | map(attribute='mac') | list | to_json }}"
+##      worker_names: "{{ openshift_hosts.workers | map(attribute='names') | map('first') | list | to_json }}"
+##      worker_macs: "{{ openshift_hosts.workers | map(attribute='mac') | list | to_json }}"
+#      bootstrap_names: "{{ openshift_hosts.bootstraps | map(attribute='names') | map('first') | list | to_json }}"
+#      bootstrap_macs: "{{ openshift_hosts.bootstraps | map(attribute='mac') | list | to_json }}"
+##      loadbalancer_names: "{{ openshift_hosts.loadbalancers | map(attribute='names') | map('first') | list | to_json }}"
+##      loadbalancer_macs: "{{ openshift_hosts.loadbalancers | map(attribute='mac') | list | to_json }}"
+##
+#
