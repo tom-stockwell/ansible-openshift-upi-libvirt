@@ -48,7 +48,5 @@ galaxy_info:
     #       Maximum 20 tags per role.
 
 dependencies: 
-  - name: stackhpc.libvirt-host
-    tags: [ never ]
   - name: stocky37.openshift-clients
     tags: [ never ]

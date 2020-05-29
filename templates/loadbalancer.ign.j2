@@ -1,15 +1,24 @@
 {
-	"ignition": { "version": "2.2.0" },
+	"ignition": { "version": "3.0.0" },
+  "storage": {
+    "files": [{
+      "filesystem": "root",
+      "path": "/etc/haproxy/haproxy.cfg",
+      "mode": 420,
+      "contents": { "source": "data:text/plain;charset=utf-8;base64,{{ lookup('template', openshift_haproxy_template) | b64encode }}" }
+    }]
+  },
 	"systemd": {
 		"units": [{
-			"name": "podman.service",
-			"enable": true
-		}]
+      "name": "openshift-loadbalancer.service",
+      "enabled": true,
+      "contents": "{{ lookup('template', openshift_loadbalancer_systemd_template) | regex_replace('\\n', '\\\\n') }}"
+    }]
 	},
 	"passwd": {
 		"users": [
 			{
-				"name": "fedora",
+				"name": "core",
 				"sshAuthorizedKeys": [
 					"{{ openshift_ssh_key }}"
 				]

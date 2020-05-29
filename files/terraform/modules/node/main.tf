@@ -12,10 +12,8 @@ resource "libvirt_volume" "vol" {
 
 resource "libvirt_ignition" "ignition" {
   name = "${var.node_type}.${var.fqdn}.ign"
-//  name = "${var.names[count.index].ign"
   content = "${path.root}/../${var.node_type}.ign"
   pool = var.storage_pool
-//  count = length(var.names)
 }
 
 resource "libvirt_domain" "node" {

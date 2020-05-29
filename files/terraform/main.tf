@@ -43,17 +43,17 @@ module "bootstraps" {
   storage      = var.bootstrap_storage
 }
 
-//module "loadbalancers" {
-//  source      = "./modules/node"
-//
-//  node_type    = "loadbalancer"
-//  fqdn         = var.fqdn
-//  names        = var.loadbalancer_names
-//  macs         = var.loadbalancer_macs
-//  network_name = var.network_name
-//  storage_pool = var.storage_pool
-//  image_source = var.fedora_url
-//  memory       = var.loadbalancer_memory
-//  vcpu         = var.loadbalancer_vcpu
-//  storage      = var.loadbalancer_storage
-//}
+module "loadbalancers" {
+  source      = "./modules/node"
+
+  node_type    = "loadbalancer"
+  fqdn         = var.fqdn
+  names        = var.loadbalancer_names
+  macs         = var.loadbalancer_macs
+  network_name = var.network_name
+  storage_pool = var.storage_pool
+  image_source = var.fcos_url
+  memory       = var.loadbalancer_memory
+  vcpu         = var.loadbalancer_vcpu
+  storage      = var.loadbalancer_storage
+}

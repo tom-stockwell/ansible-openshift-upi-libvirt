@@ -4,18 +4,16 @@ openshift_install_root: "{{ ansible_user_dir }}/openshift"
 openshift_install_dir: "{{ openshift_install_root }}/{{ openshift_fqdn }}"
 openshift_terraform_dir: "{{ openshift_install_dir }}/terraform"
 openshift_images_dir: "{{ openshift_install_root }}/images"
-
 openshift_terraform_files: terraform/
-openshift_loadbalancer_ign_template: loadbalancer.ign.j2
 
 openshift_download_osimages: true
+openshift_url_filename_regex: '(.*\.qcow2)(?:\.\w+)?$'
 openshift_rhcos_url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.4/latest/rhcos-4.4.3-x86_64-qemu.x86_64.qcow2.gz
 openshift_fcos_url: https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200505.3.0/x86_64/fedora-coreos-31.20200505.3.0-qemu.x86_64.qcow2.xz
-openshift_url_filename_regex: '(.*\.qcow2)(?:\.\w+)?$'
 openshift_rhcos_image: "{{ openshift_images_dir }}/{{ openshift_rhcos_url | basename | regex_replace(openshift_url_filename_regex, '\\1') }}"
 openshift_fcos_image: "{{ openshift_images_dir }}/{{ openshift_fcos_url | basename | regex_replace(openshift_url_filename_regex, '\\1') }}"
 
-openshift_api_cname: "{{ openshift_hosts.loadbalancers[0].name }}"
+openshift_api_cname: "{{ openshift_hosts.loadbalancers[0].names | first }}.{{ openshift_fqdn }}"
 openshift_api_internal_cname: "{{ openshift_api_cname }}"
 openshift_apps_cname: "{{ openshift_api_cname }}"
 
@@ -30,8 +28,13 @@ openshift_network_dhcp_start: "{{ openshift_network_ip | ipaddr('next_usable') }
 openshift_network_dhcp_end: "{{ openshift_network_ip | ipaddr('last_usable') }}"
 openshift_network_mac_prefix: '52:54:00'
 
-openshift_haproxy_version: 2.2
-openshift_haproxy_image: docker.io/haproxytech/haproxy-alpine:{{ openshift_haproxy_version }}
+openshift_loadbalancer_ign_template: loadbalancer.ign.j2
+openshift_loadbalancer_systemd_template: loadbalancer-systemd.conf.j2
+openshift_loadbalancer_image: docker.io/haproxytech/haproxy-alpine:2.1
+openshift_loadbalancer_volume: "{{ openshift_haproxy_config_path | dirname }}:/usr/local/etc/haproxy:ro"
+openshift_haproxy_template: haproxy.cfg.j2
+openshift_haproxy_balance_mode: source
+openshift_haproxy_config_path: /etc/haproxy/haproxy.cfg
 
 openshift_hosts:
   loadbalancers:
@@ -65,4 +68,3 @@ openshift_hosts:
     - names: [worker-1]
       ip: "{{ openshift_network_dhcp_start | ipmath(7) }}"
       mac: "{{ openshift_network_mac_prefix | random_mac('worker-1.' + openshift_fqdn) }}"
-

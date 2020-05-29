@@ -12,7 +12,7 @@ variable "rhcos_url" {
   type    = string
 }
 
-variable "fedora_url" {
+variable "fcos_url" {
   type    = string
 }
 

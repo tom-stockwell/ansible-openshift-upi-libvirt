@@ -1,0 +1,77 @@
+#jinja2:lstrip_blocks: True
+#---------------------------------------------------------------------
+# Global settings
+#---------------------------------------------------------------------
+global
+    log         /dev/log local0 info
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        haproxy
+    group       haproxy
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    tcp
+    log                     global
+    option                  tcplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+frontend api-server
+    bind :6443
+    default_backend api-server
+
+frontend machine-config-server
+    bind :22623
+    default_backend machine-config-server
+
+frontend ingress-http
+    bind :80
+    default_backend ingress-http
+
+frontend ingress-https
+    bind *:443
+    default_backend ingress-https
+
+
+backend api-server
+    balance {{ openshift_haproxy_balance_mode }}
+    {% for server in openshift_hosts.bootstraps | union(openshift_hosts.masters) %}
+    server {{ server.names | first }} {{  server.ip }}:6443 check
+    {% endfor %}
+
+backend machine-config-server
+    balance {{ openshift_haproxy_balance_mode }}
+    {% for server in openshift_hosts.bootstraps | union(openshift_hosts.masters) %}
+    server {{ server.names | first }} {{  server.ip }}:22623 check
+    {% endfor %}
+
+backend ingress-http
+    balance {{ openshift_haproxy_balance_mode }}
+    {% for server in openshift_hosts.workers %}
+    server {{ server.names | first }} {{  server.ip }}:80 check
+    {% endfor %}
+
+backend ingress-https
+    balance {{ openshift_haproxy_balance_mode }}
+    {% for server in openshift_hosts.workers %}
+    server {{ server.names | first }} {{  server.ip }}:443 check
+    {% endfor %}

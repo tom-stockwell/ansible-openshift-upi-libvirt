@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenShift LoadBalancer (HAProxy)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=0
+ExecStartPre=-/bin/podman kill openshift-loadbalancer
+ExecStartPre=-/bin/podman rm openshift-loadbalancer
+ExecStartPre=/bin/podman pull {{ openshift_loadbalancer_image }}
+ExecStart=podman run --name openshift-loadbalancer -p 80:80 -p 443:443 -p 6443:6443 -p 22623:22623 -v {{ openshift_loadbalancer_volume }} {{ openshift_loadbalancer_image }}
+ExecStop=podman stop openshift-loadbalancer
+ExecStopPost=podman rm openshift-loadbalancer
+
+[Install]
+WantedBy=multi-user.target

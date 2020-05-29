@@ -1,0 +1,33 @@
+---
+- debug:
+    var: openshift_networks
+# originally sourced from stackhpc.libvirt-host/tasks/networks.yml
+# | default(lookup('template', 'openshift-network.xml.j2')) was giving issues since it would always attempt to
+# render the defualt template
+- name: Ensure openshift network is defined
+  virt_net:
+    name: "{{ network.name }}"
+    command: define
+    xml: "{{ network.xml }}"
+  loop: "{{ openshift_networks }}"
+  loop_control:
+    loop_var: network
+  become: True
+
+- name: Ensure libvirt networks are active
+  virt_net:
+    name: "{{ network.name }}"
+    state: active
+  loop: "{{ openshift_networks }}"
+  loop_control:
+    loop_var: network
+  become: True
+
+- name: Ensure libvirt networks are started on boot
+  virt_net:
+    name: "{{ network.name }}"
+    autostart: yes
+  loop: "{{ openshift_networks }}"
+  loop_control:
+    loop_var: network
+  become: True
