@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: image-registry-storage
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    path: /tank/openshift/image-registry
+    server: 192.168.0.100
+  persistentVolumeReclaimPolicy: Retain

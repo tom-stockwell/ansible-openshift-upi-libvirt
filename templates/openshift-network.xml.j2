@@ -14,9 +14,6 @@
   </ip>
 
   <dns>
-{#    {% for forwarder in openshift_network_dns %}#}
-{#    <forwarder {% if forwarder.domain is defined %}domain='{{ forwarder.domain }}'{% endif %} {% if forwarder.addr is defined %}addr='{{ forwarder.addr }}'{% endif %}/>#}
-{#    {% endfor %}#}
     {% for host in openshift_all_hosts %}
     <host ip='{{ host.ip | ipaddr('ip') }}'>
       {% for name in host.names %}
@@ -30,7 +27,6 @@
     {% for master in openshift_hosts.masters %}
     <dnsmasq:option value="srv-host=_etcd-server-ssl._tcp.{{ openshift_fqdn }},etcd-{{ loop.index - 1 }}.{{ openshift_fqdn }},2380,0,10" />
     {% endfor %}
-
     <dnsmasq:option value="cname=api.{{ openshift_fqdn }},{{ openshift_api_cname }}" />
     <dnsmasq:option value="cname=api-int.{{ openshift_fqdn }},{{ openshift_api_internal_cname }}" />
     <dnsmasq:option value="cname=*.apps.{{ openshift_fqdn }},{{ openshift_apps_cname }}" />
@@ -39,5 +35,4 @@
     <dnsmasq:option value="auth-server={{ openshift_fqdn }},{{ openshift_network_bridge_name }}" />
     <dnsmasq:option value="dhcp-option=6,{{ [openshift_network_ip | ipaddr('ip')] | union(openshift_network_extra_dns) | join(',') }}" />
   </dnsmasq:options>
-
 </network>
